@@ -49,7 +49,7 @@ namespace winformsContactsnetviejo
             }
         }
 
-        public List<Contact> GetContacts()
+        public List<Contact> GetContacts(string search = null)
         {
             List<Contact> contacts = new List<Contact>();
             try
@@ -57,8 +57,21 @@ namespace winformsContactsnetviejo
                 conn.Open();
                 string query = @"SELECT Id, FirstName, LastName, Phone, Address
                                 FROM Contacts ";
-                SqlCommand command = new SqlCommand(query, conn);
+
+                SqlCommand command = new SqlCommand();
+
+                if (!string.IsNullOrEmpty(search))
+                { 
+                    query += @" WHERE FirstName LIKE @Search OR Phone LIKE @Search OR
+                                Address LIKE @Search ";
+                command.Parameters.Add(new SqlParameter("@Search", $"%{search}%")); 
+                }
+
+                command.CommandText = query;
+                command.Connection = conn;
+
                 SqlDataReader reader = command.ExecuteReader();
+
                 while (reader.Read())
                 {
                     contacts.Add(new Contact
@@ -118,6 +131,30 @@ namespace winformsContactsnetviejo
                 throw;
             }
             finally { conn.Close(); }
+        }
+
+        public void DeleteContact(int id)
+        {
+            try
+            {
+                conn.Open();
+                string query = @"DELETE FROM Contacts WHERE Id= @Id";
+
+                SqlCommand command = new SqlCommand(query, conn);
+                command.Parameters.Add(new SqlParameter("@Id", id));
+
+                command.ExecuteNonQuery();
+
+            }
+            catch (Exception)
+            {
+
+                throw;
+            }
+            finally
+            {
+                conn.Close();
+            }
         }
     }
 
